@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserProfile, View, InsightReport, AlertSettings, CalculatorParams, TradeSuggestion, DashboardLayout, AIModel, UsageStats } from './types';
-import { SentinelAIService } from './services/geminiService';
+import { SentinelAIService } from './geminiService';
 import Sidebar from './Sidebar';
 import Dashboard from './Dashboard';
-import TuningLanding from './components/TuningLanding';
+import TuningLanding from './TuningLanding';
 import IntelligenceFeed from './IntelligenceFeed';
 import Settings from './Settings';
 import TradeCalculator from './TradeCalculator';
@@ -12,9 +12,9 @@ import AlertsInbox from './AlertsInbox';
 import Header from './Header';
 import DeepDive from './DeepDive';
 import SentinelHQ from './SentinelHQ';
-import ScouringOverlay from './components/ScouringOverlay';
-import Logo from './components/Logo';
-import TermsModal from './components/TermsModal';
+import ScouringOverlay from './ScouringOverlay';
+import Logo from './Logo';
+import TermsModal from './TermsModal';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('landing');
@@ -114,7 +114,6 @@ const App: React.FC = () => {
     try { 
       const cached = sentinelRef.current.findCachedReport(currentProfile);
       if (cached) {
-        console.info("Cache hit from Global Alpha Registry. Sharing intelligence...");
         setIntelligence(cached);
         setLastUpdated(new Date());
         setActiveView('dashboard');
@@ -132,7 +131,7 @@ const App: React.FC = () => {
         setError({ type: 'quota', msg: "Quota hit. Switch to Flash or try again in a moment." });
         setCooldown(15);
       } else {
-        setError({ type: 'generic', msg: "Scan incomplete. The market engine encountered a hiccup." });
+        setError({ type: 'generic', msg: "Scan incomplete." });
       }
     } finally { 
       setLoading(false); 
@@ -154,25 +153,16 @@ const App: React.FC = () => {
     setHasAcceptedTerms(true);
   };
 
-  const InitialDisclaimer = ({ className = "" }) => (
-    <div className={`px-8 py-6 mt-auto bg-slate-900/20 border border-slate-800/50 rounded-3xl ${className}`}>
-      <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-3xl mx-auto text-center">
-        <span className="text-indigo-400 font-black uppercase tracking-widest block mb-2 text-xs">Research Guardrail & Disclaimer</span>
-        Vora AI is an autonomous intelligence assistant designed for informational and market research purposes only. <strong>Vora is not a financial advisor.</strong> All insights represent algorithmic data synthesis, not financial advice. Past performance is not indicative of future results. Trading involves significant risk of capital loss. Always conduct independent verification before taking action.
-      </p>
-    </div>
-  );
-
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center transition-colors">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
         <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="mb-8 animate-in zoom-in duration-1000">
+          <div className="mb-8">
              <Logo size={100} />
           </div>
           <h1 className="text-5xl font-black tracking-tighter mb-4 text-white uppercase italic">VORA AI</h1>
           <p className="text-slate-400 max-w-lg mb-12 font-medium leading-relaxed text-sm md:text-base">
-            Vora is your autonomous market research assistant. <br/>We synthesize global data to surface relevant insights, serving as a data-driven guide for your personal trading strategy.
+            Vora is your autonomous market research assistant. We synthesize global data to surface relevant insights.
           </p>
           <button 
             onClick={handleLogin}
@@ -181,7 +171,6 @@ const App: React.FC = () => {
             Initialize Assistant
           </button>
         </div>
-        <InitialDisclaimer className="border-none bg-transparent opacity-40 mb-4" />
       </div>
     );
   }

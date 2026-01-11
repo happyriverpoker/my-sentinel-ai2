@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { UserProfile, PersonaWeights } from '../types';
+import { UserProfile, PersonaWeights } from './types';
 
 interface ProfileEditorProps {
   profile: UserProfile;
@@ -16,14 +17,13 @@ interface SentinelDef {
   name: string;
   icon: React.ReactNode;
   color: string;
-  role: string;
 }
 
+// Added missing icon property to SENTINELS configuration to resolve TypeScript compilation errors.
 const SENTINELS: SentinelDef[] = [
   { 
     id: 'safe', 
-    name: 'VORA SHIELD', 
-    role: 'Preservation',
+    name: 'Shield (Safe)', 
     color: 'indigo',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,8 +33,7 @@ const SENTINELS: SentinelDef[] = [
   },
   { 
     id: 'riskTaker', 
-    name: 'VORA SCOUT', 
-    role: 'Speculation',
+    name: 'Scout (Risk)', 
     color: 'amber',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,8 +43,7 @@ const SENTINELS: SentinelDef[] = [
   },
   { 
     id: 'ta', 
-    name: 'VORA PRISM', 
-    role: 'Patterns',
+    name: 'Prism (Technical)', 
     color: 'emerald',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,8 +53,7 @@ const SENTINELS: SentinelDef[] = [
   },
   { 
     id: 'fa', 
-    name: 'VORA CORE', 
-    role: 'Catalysts',
+    name: 'Core (Fundamental)', 
     color: 'purple',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,6 +65,7 @@ const SENTINELS: SentinelDef[] = [
 
 const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
+  const [newArea, setNewArea] = useState('');
 
   const toggleMarket = (market: string) => {
     const current = formData.focusAreas;
@@ -76,6 +74,17 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave }) => {
     } else {
       setFormData({ ...formData, focusAreas: [...current, market] });
     }
+  };
+
+  const addCustomArea = () => {
+    if (newArea.trim() && !formData.focusAreas.includes(newArea.trim())) {
+      setFormData({ ...formData, focusAreas: [...formData.focusAreas, newArea.trim()] });
+      setNewArea('');
+    }
+  };
+
+  const removeArea = (area: string) => {
+    setFormData({ ...formData, focusAreas: formData.focusAreas.filter(a => a !== area) });
   };
 
   const updateWeight = (id: keyof PersonaWeights, val: number) => {
@@ -89,42 +98,37 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500 px-4 md:px-0">
-      <div className="p-8 md:p-10 bg-slate-900 rounded-[2.5rem] border border-slate-800 shadow-2xl">
-        <div className="flex flex-col mb-10">
-          <h2 className="text-3xl font-black mb-2 uppercase italic tracking-tight text-white">Council Calibration</h2>
-          <p className="text-slate-400 text-sm font-medium">Fine-tune your Sentinels to adjust your intelligence lens.</p>
-        </div>
+    <div className="max-w-xl mx-auto space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="p-8 bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl">
+        <h2 className="text-2xl font-bold mb-2 uppercase italic tracking-tight text-white">Council Configuration</h2>
+        <p className="text-slate-400 text-sm mb-8">Fine-tune your Sentinels to adjust your intelligence lens.</p>
         
-        <div className="space-y-10">
-          {/* Identity & Mandate Section */}
-          <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Identity Section */}
+          <div className="space-y-4">
             <div>
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Agent Designation (Name)</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Agent Designation</label>
               <input 
                 value={formData.name} 
                 onChange={e => setFormData({...formData, name: e.target.value})} 
-                className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-indigo-500 transition-all outline-none text-slate-100 font-bold" 
+                className="w-full bg-slate-950 p-4 rounded-xl border border-slate-800 focus:border-indigo-500 transition-all outline-none text-slate-100 font-bold" 
               />
             </div>
             <div>
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Intelligence Mandate (Instructions)</label>
-              <textarea 
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Role / Profession</label>
+              {/* Fix: Replaced 'profession' with 'mandate' to align with the UserProfile interface */}
+              <input 
                 value={formData.mandate} 
-                rows={3}
                 onChange={e => setFormData({...formData, mandate: e.target.value})} 
-                className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-indigo-500 transition-all outline-none text-slate-100 font-bold text-sm leading-relaxed resize-none" 
+                className="w-full bg-slate-950 p-4 rounded-xl border border-slate-800 focus:border-indigo-500 transition-all outline-none text-slate-100 font-bold" 
               />
             </div>
           </div>
 
           {/* Sentinel Mixer */}
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-               <label className="text-xs font-black text-indigo-400 uppercase tracking-widest block">The Sentinel Council Mixer</label>
-               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Weight Distribution</span>
-            </div>
-            <div className="space-y-8">
+          <div className="space-y-6">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">The Sentinel Council Mixer</label>
+            <div className="space-y-5">
               {SENTINELS.map(sentinel => {
                 const weight = formData.personaWeights[sentinel.id];
                 const colorMap: any = {
@@ -134,19 +138,16 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave }) => {
                    purple: 'accent-purple-500'
                 };
                 return (
-                  <div key={sentinel.id} className="space-y-3">
-                    <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest">
-                       <div className="flex items-center gap-2">
-                          <span className={`text-${sentinel.color}-400 uppercase tracking-widest font-black`}>{sentinel.name}</span>
-                          <span className={`text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-${sentinel.color}-500/20 text-slate-400`}>{sentinel.role}</span>
-                       </div>
-                       <span className="text-slate-300 font-black">{Math.round(weight * 100)}%</span>
+                  <div key={sentinel.id} className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                       <span className={`text-${sentinel.color}-400`}>{sentinel.name}</span>
+                       <span className="text-slate-500">{Math.round(weight * 100)}%</span>
                     </div>
                     <input 
                       type="range" min="0" max="2" step="0.1" 
                       value={weight} 
                       onChange={(e) => updateWeight(sentinel.id, parseFloat(e.target.value))}
-                      className={`w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer ${colorMap[sentinel.color]}`} 
+                      className={`w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer ${colorMap[sentinel.color]}`} 
                     />
                   </div>
                 );
@@ -155,19 +156,19 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave }) => {
           </div>
 
           {/* Market Interests Section */}
-          <div className="space-y-6 pt-4">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest block">Market Specializations</label>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Specializations</label>
+            <div className="grid grid-cols-2 gap-2">
               {PREDEFINED_MARKETS.map(market => {
                 const isSelected = formData.focusAreas.includes(market);
                 return (
                   <button
                     key={market}
                     onClick={() => toggleMarket(market)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-widest transition-all ${
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
                       isSelected 
                       ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' 
-                      : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-white'
+                      : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
                     }`}
                   >
                     {market}
@@ -179,9 +180,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave }) => {
 
           <button 
             onClick={() => onSave(formData)} 
-            className="bg-white text-slate-950 w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] mt-8 shadow-2xl transition-all active:scale-[0.98] hover:scale-[1.01]"
+            className="bg-white text-slate-950 w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] mt-8 shadow-xl transition-all active:scale-[0.98]"
           >
-            Update Council Calibration
+            Update Council Tuning
           </button>
         </div>
       </div>

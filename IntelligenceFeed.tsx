@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { InsightReport, Catalyst } from '../types';
+import { InsightReport, Catalyst, TrendingKeyword, SourceConsensus } from './types';
 
 interface FeedProps {
   report: InsightReport | null;
@@ -8,100 +8,124 @@ interface FeedProps {
   onRefresh: () => void;
 }
 
-const ImpactBar: React.FC<{ label: string; score: number; color: string }> = ({ label, score, color }) => (
-  <div className="flex flex-col gap-1 flex-1">
-    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
-      <span>{label}</span>
-      <span>{score}/10</span>
-    </div>
-    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-      <div 
-        className={`h-full ${color} transition-all duration-1000`} 
-        style={{ width: `${score * 10}%` }}
-      ></div>
-    </div>
-  </div>
-);
+const SentimentBadge: React.FC<{ sentiment: string }> = ({ sentiment }) => {
+  const colors = {
+    bullish: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    bearish: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+    neutral: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+    positive: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    negative: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+  };
+  const colorClass = colors[sentiment.toLowerCase() as keyof typeof colors] || colors.neutral;
+  
+  return (
+    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border ${colorClass}`}>
+      {sentiment}
+    </span>
+  );
+};
 
-const CatalystCard: React.FC<{ catalyst: Catalyst }> = ({ catalyst }) => {
+const TrendingHub: React.FC<{ keywords: TrendingKeyword[] }> = ({ keywords }) => {
+  return (
+    <div className="p-8 bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl mb-8">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.3em]">Market Momentum Pulse</h3>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+          <span className="text-[10px] font-black text-slate-500 uppercase">Live Data Stream</span>
+        </div>
+      </div>
+      
+      <div className="flex flex-wrap gap-4">
+        {keywords.map((kw, i) => (
+          <div key={i} className="group relative">
+            <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3 hover:border-indigo-500/50 transition-all cursor-default">
+              <div className="flex flex-col">
+                <span className="text-sm font-black text-white group-hover:text-indigo-400 transition-colors">{kw.word}</span>
+                <div className="flex items-center gap-2 mt-1 text-left">
+                  <div className="w-16 h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500" style={{ width: `${kw.momentum}%` }}></div>
+                  </div>
+                  <span className="text-[9px] font-black text-slate-600">{kw.momentum}%</span>
+                </div>
+              </div>
+              <SentimentBadge sentiment={kw.sentiment} />
+            </div>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-800 border border-slate-700 rounded-xl text-[10px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl leading-relaxed">
+              {kw.context}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SynthesizedReport: React.FC<{ catalyst: Catalyst }> = ({ catalyst }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isPositive = catalyst.sentiment === 'positive';
-  const isNeutral = catalyst.sentiment === 'neutral';
 
   return (
-    <div className={`p-6 rounded-2xl bg-slate-900 border transition-all duration-300 group shadow-xl shadow-black/20 ${
-      isExpanded ? 'border-indigo-500/40 bg-slate-900/80' : 'border-slate-800 hover:border-slate-700'
-    }`}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${
-            isPositive ? 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20' : 
-            isNeutral ? 'bg-slate-400/10 text-slate-400 border border-slate-400/20' : 
-            'bg-rose-400/10 text-rose-400 border border-rose-400/20'
-          }`}>
-            {catalyst.category}
-          </span>
-          <span className="text-slate-500 text-xs">{new Date(catalyst.timestamp).toLocaleDateString()}</span>
+    <div className={`p-8 bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-xl transition-all duration-300 group ${isExpanded ? 'ring-2 ring-indigo-500/20' : 'hover:border-slate-700'}`}>
+      <div className="flex justify-between items-start mb-6">
+        <div className="text-left">
+          <div className="flex items-center gap-3 mb-2">
+            <SentimentBadge sentiment={catalyst.sentiment} />
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{catalyst.category}</span>
+          </div>
+          <h3 className="text-xl font-black text-white group-hover:text-indigo-300 transition-colors tracking-tight leading-tight max-w-2xl">{catalyst.title}</h3>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-xs font-bold text-slate-500">AGGREGATE IMPACT</span>
-          <div className="flex gap-0.5">
+        <div className="text-right">
+          <div className="text-[9px] font-black text-slate-500 uppercase mb-1 tracking-widest text-right">Data Impact</div>
+          <div className="flex gap-0.5 justify-end">
             {[...Array(10)].map((_, i) => (
-              <div 
-                key={i} 
-                className={`w-1.5 h-3 rounded-sm ${i < catalyst.impactScore ? 'bg-indigo-500' : 'bg-slate-800'}`}
-              ></div>
+              <div key={i} className={`w-1 h-3 rounded-full ${i < catalyst.impactScore / 10 ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-slate-800'}`}></div>
             ))}
           </div>
+          {catalyst.overallCredibilityScore && (
+             <div className="mt-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest">
+                Source Credibility: {catalyst.overallCredibilityScore}%
+             </div>
+          )}
         </div>
       </div>
 
-      <h3 className="text-xl font-bold mb-3 text-slate-100 group-hover:text-indigo-300 transition-colors">
-        {catalyst.title}
-      </h3>
-      
-      <p className={`text-slate-400 leading-relaxed mb-4 ${isExpanded ? '' : 'line-clamp-2'}`}>
+      <p className="text-slate-400 text-sm leading-relaxed mb-6 font-medium text-left line-clamp-3 group-hover:line-clamp-none transition-all">
         {catalyst.summary}
       </p>
 
       {isExpanded && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300 py-4 border-t border-slate-800 mt-4">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-500 pt-6 border-t border-slate-800 mt-6 space-y-8">
           <div>
-            <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Intelligence Deep Dive</h4>
-            <div className="text-sm text-slate-300 leading-relaxed space-y-4 whitespace-pre-line">
+            <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4 text-left">Synthesized Analysis</h4>
+            <div className="text-sm text-slate-300 leading-relaxed text-left whitespace-pre-line font-medium p-6 bg-slate-950 rounded-3xl border border-slate-800">
               {catalyst.detailedAnalysis}
             </div>
           </div>
 
           <div>
-            <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Impact Vector Breakdown</h4>
-            <div className="flex flex-col md:flex-row gap-6 p-4 bg-slate-950 rounded-xl border border-slate-800">
-              <ImpactBar label="Market" score={catalyst.impactBreakdown.market} color="bg-emerald-500" />
-              <ImpactBar label="Technical" score={catalyst.impactBreakdown.technical} color="bg-indigo-500" />
-              <ImpactBar label="Regulatory" score={catalyst.impactBreakdown.regulatory} color="bg-amber-500" />
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest text-left">Institutional Proof of Work Map</h4>
+              <span className="text-[8px] font-bold text-slate-600 uppercase">Consensus Verification</span>
             </div>
-          </div>
-
-          <div>
-            <h4 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Verification Sources ({catalyst.sources?.length || 0})</h4>
-            <div className="flex flex-wrap gap-3">
-              {catalyst.sources?.map((source, i) => (
-                <a 
-                  key={i} 
-                  href={source.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-300 hover:text-white hover:border-indigo-500 transition-all"
-                >
-                  <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  {source.title}
-                </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {catalyst.consensusBreakdown?.map((cb, idx) => (
+                <div key={idx} className="p-4 bg-slate-950 border border-slate-800 rounded-2xl relative overflow-hidden group/desk">
+                  <div className={`absolute top-0 left-0 w-1 h-full ${cb.stance === 'bullish' ? 'bg-emerald-500' : cb.stance === 'bearish' ? 'bg-rose-500' : 'bg-slate-500'}`}></div>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-black text-white uppercase tracking-tighter">{cb.source}</span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <div className="w-12 h-0.5 bg-slate-800 rounded-full overflow-hidden">
+                           <div className="h-full bg-emerald-500" style={{ width: `${cb.credibilityScore}%` }}></div>
+                        </div>
+                        <span className="text-[7px] font-bold text-slate-500">{cb.credibilityScore}% Reliability</span>
+                      </div>
+                    </div>
+                    <SentimentBadge sentiment={cb.stance} />
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-medium text-left">{cb.summary}</p>
+                </div>
               ))}
-              {(!catalyst.sources || catalyst.sources.length === 0) && (
-                <span className="text-xs text-slate-600 italic">No primary documentation found in this scan.</span>
-              )}
             </div>
           </div>
         </div>
@@ -109,13 +133,10 @@ const CatalystCard: React.FC<{ catalyst: Catalyst }> = ({ catalyst }) => {
 
       <button 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full mt-4 pt-4 border-t border-slate-800/50 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-indigo-400 transition-colors"
+        className="w-full mt-6 flex items-center justify-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
       >
-        {isExpanded ? (
-          <>COLLAPSE ANALYSIS <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg></>
-        ) : (
-          <>EXPAND DEEP DIVE <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></>
-        )}
+        {isExpanded ? 'Minimize Synthesis' : 'Expand Research & Proof of Work'}
+        <svg className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
       </button>
     </div>
   );
@@ -123,41 +144,53 @@ const CatalystCard: React.FC<{ catalyst: Catalyst }> = ({ catalyst }) => {
 
 const IntelligenceFeed: React.FC<FeedProps> = ({ report, loading, onRefresh }) => {
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-3xl font-bold mb-1">Catalyst Intelligence</h2>
-          <p className="text-slate-400">Targeted opportunities analyzed for your specific persona and focus areas.</p>
+    <div className="max-w-5xl mx-auto space-y-12 pb-24">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div className="text-left">
+          <h2 className="text-4xl font-black text-white tracking-tighter mb-2 italic">RESEARCH PULSE HUB</h2>
+          <p className="text-slate-400 font-medium max-w-xl">
+            Synthesized market observations compiled from verified data streams and institutional reporting.
+          </p>
         </div>
         <button 
           onClick={onRefresh}
           disabled={loading}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+          className="px-8 py-4 bg-indigo-600 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-500/20 hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-3"
         >
-          <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Re-Scan Markets
+          <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          Refresh Research
         </button>
       </div>
 
-      <div className="space-y-6 pb-20">
-        {report?.topCatalysts.map((catalyst) => (
-          <CatalystCard key={catalyst.id} catalyst={catalyst} />
-        ))}
-
-        {!loading && (!report || report.topCatalysts.length === 0) && (
-          <div className="text-center py-20 bg-slate-900 rounded-3xl border border-slate-800 border-dashed">
-            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-slate-300">No active catalysts found</h3>
-            <p className="text-slate-500 mt-2 max-w-xs mx-auto">Broaden your focus areas in the persona settings or try a fresh global scan.</p>
+      {loading ? (
+        <div className="space-y-8 px-4 animate-pulse">
+          <div className="h-64 bg-slate-900 border border-slate-800 rounded-[2.5rem]"></div>
+          <div className="h-48 bg-slate-900 border border-slate-800 rounded-[2.5rem]"></div>
+          <div className="h-48 bg-slate-900 border border-slate-800 rounded-[2.5rem]"></div>
+        </div>
+      ) : report ? (
+        <div className="px-4 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <TrendingHub keywords={report.trendingKeywords || []} />
+          
+          <div className="space-y-8">
+            <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] px-4 text-left">Key Research Drivers</h3>
+            {report.topCatalysts.length > 0 ? (
+              report.topCatalysts.map((c) => (
+                <SynthesizedReport key={c.id} catalyst={c} />
+              ))
+            ) : (
+              <div className="p-20 bg-slate-900/40 border-2 border-dashed border-slate-800 rounded-[3rem] text-center">
+                <h4 className="text-xl font-black text-slate-300">Pulse Scan Inactive</h4>
+                <p className="text-slate-500 max-w-sm mx-auto text-sm">No significant observations detected. Broaden your focus area to capture more data.</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="p-20 bg-slate-900 border border-slate-800 rounded-[3rem] text-center">
+          <p className="text-slate-500 font-bold uppercase tracking-widest">Initialize Research Scour</p>
+        </div>
+      )}
     </div>
   );
 };
